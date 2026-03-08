@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>perplexity (node)</title>
+    <style>
+      body { font-family: ui-sans-serif, system-ui; margin: 0; background: #0b0c10; color: #e8e8ea; }
+      .wrap { max-width: 900px; margin: 40px auto; padding: 16px; }
+      .card { background: #12141b; border: 1px solid #222536; border-radius: 14px; padding: 16px; }
+      input, button { border-radius: 12px; border: 1px solid #2a2e45; padding: 12px; background: #0f1118; color: #e8e8ea; }
+      input { width: 100%; }
+      button { cursor: pointer; }
+      a { color: #9bd1ff; }
+      .row { display: flex; gap: 10px; margin-top: 12px; align-items: center; }
+      .row > button { white-space: nowrap; }
+      pre { white-space: pre-wrap; line-height: 1.55; }
+      .muted { color: #aab0c0; font-size: 14px; }
+      ol { margin-top: 8px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Perplexity-style Answer Engine (Node)</h1>
+      <p class="muted">Ask → web search → answer with citations.</p>
+
+      <div class="card">
+        <input id="q" placeholder="Ask anything..." />
+        <div class="row">
+          <button id="ask">Ask</button>
+          <span id="status" class="muted"></span>
+        </div>
+
+        <h3>Answer</h3>
+        <pre id="answer"></pre>
+
+        <h3>Citations</h3>
+        <ol id="cites"></ol>
+      </div>
+    </div>
+
+    <script>
+      const q = document.getElementById('q');
+      const ask = document.getElementById('ask');
+      const status = document.getElementById('status');
+      const answer = document.getElementById('answer');
+      const cites = document.getElementById('cites');
+
+      function clear() {
+        answer.textContent = '';
+        cites.innerHTML = '';
+      }
+
+      ask.onclick = async () => {
+        clear();
+        status.textContent = 'Searching…';
+        ask.disabled = true;
+
+        const res = await fetch('/api/answer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: q.value })
+        });
+
+        const data = await res.json();
+        answer.textContent = data.answer || '';
+
+        (data.citations || []).forEach((c) => {
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = c.url;
+          a.target = '_blank';
+          a.rel = 'noreferrer';
+          a.textContent = c.title || c.url;
+          li.appendChild(a);
+          cites.appendChild(li);
+        });
+
+        status.textContent = '';
+        ask.disabled = false;
+      };
+    </script>
+  </body>
+</html>
